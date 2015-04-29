@@ -6,10 +6,20 @@
 
 using namespace std;
 
-int sieve(int limit, vector<bool>&is_prime) {
-  for(int i = 2; i <= sqrt(limit); i++) {
+bool debug_msg_i = true;
+bool debug_msg_j = true;
+
+
+int sieve(int limit, vector<bool> &is_prime) {
+  for(int i = 1; 1+2*i <= sqrt(limit*2); i++) {
+    int real_number = 1+2*i;
+    debug_msg_i && cout << "i - " << i << endl;
+    debug_msg_i && cout << 1+2*i << " < " << sqrt(limit*2) << endl;
     if(is_prime[i]) {
-      for (int j = i * i; j <= limit; j += i) {
+      debug_msg_i && cout << "Chosen" << endl;
+      for (int j = i + (i*(2*i+1)); j <= limit; j += 2*i+1) {
+        debug_msg_j && cout << "j - " << j << endl;
+        cout << "j - " << j << endl;
         is_prime[j] = false;
       }
     }
@@ -28,13 +38,16 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  vector<bool> is_prime(limit, true);
+  int limit_t = floor(limit/2.0);
 
-  sieve(limit, is_prime);
+  vector<bool> is_prime(limit_t, true);
+
+  sieve(limit_t, is_prime);
 
   //Print
-  //cout << "Primes up to " << limit << ":" << endl;
-  for(int i = 2; i < is_prime.size(); i++) {
-    (is_prime[i] && cout << i << " ");
+  cout << "Primes up to " << limit << ":" << endl;
+  for(int i = 0; i < is_prime.size(); i++) {
+    is_prime[i] && cout << 2*i+1 << " ";
+    //cout << is_prime[i] << endl;
   }
 }

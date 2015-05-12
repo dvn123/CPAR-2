@@ -17,7 +17,6 @@ void sieve(int limit, vector<bool> &is_prime) {
       debug_msg_i && cout << "Chosen" << endl;
       for (int j = i + (i*(2*i+1)); j <= limit; j += 2*i+1) {
         debug_msg_j && cout << "j - " << j << endl;
-        cout << "j - " << j << endl;
         is_prime[j] = false;
       }
     }

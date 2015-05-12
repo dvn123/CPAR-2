@@ -9,7 +9,7 @@ using namespace std;
 bool debug_msg_i = false;
 bool debug_msg_j = false;
 
-int sieve(int limit, vector<bool> &is_prime) {
+void sieve(int limit, vector<bool> &is_prime) {
   for(int i = 1; 1+2*i <= sqrt(limit*2); i++) {
     debug_msg_i && cout << "i - " << i << endl;
     debug_msg_i && cout << 1+2*i << " < " << sqrt(limit*2) << endl;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     stringstream ss(argv[--argc]);
     ss >> limit;
 
-    if (limit < 1 or ss.fail()) {
+    if (limit < 1 || ss.fail()) {
       cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
       return 2;
     }

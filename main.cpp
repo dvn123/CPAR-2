@@ -6,13 +6,11 @@
 
 using namespace std;
 
-bool debug_msg_i = true;
-bool debug_msg_j = true;
-
+bool debug_msg_i = false;
+bool debug_msg_j = false;
 
 int sieve(int limit, vector<bool> &is_prime) {
   for(int i = 1; 1+2*i <= sqrt(limit*2); i++) {
-    int real_number = 1+2*i;
     debug_msg_i && cout << "i - " << i << endl;
     debug_msg_i && cout << 1+2*i << " < " << sqrt(limit*2) << endl;
     if(is_prime[i]) {
@@ -27,15 +25,18 @@ int sieve(int limit, vector<bool> &is_prime) {
 }
 
 int main(int argc, char *argv[]) {
-  int limit = 10000;
+  int limit = -1;
   if (argc == 2) {
     stringstream ss(argv[--argc]);
     ss >> limit;
 
     if (limit < 1 or ss.fail()) {
-      cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+      cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
       return 2;
     }
+  } else {
+    cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+    return 2;
   }
 
   int limit_t = floor(limit/2.0);

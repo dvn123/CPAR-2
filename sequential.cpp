@@ -4,18 +4,24 @@
 #include <cmath>
 #include <vector>
 
+#define REAL_NUMBER(n) \
+(1+2*n)
+
+#define ARRAY_INDEX(n) \
+((n-1)/2)
+
 using namespace std;
 
 bool debug_msg_i = false;
 bool debug_msg_j = false;
 
 void sieve(int limit, vector<bool> &is_prime) {
-  for(int i = 1; 1+2*i <= sqrt(limit*2); i++) {
+  for(int i = 1; REAL_NUMBER(i)*REAL_NUMBER(i) <= limit*2; i++) {
     debug_msg_i && cout << "i - " << i << endl;
-    debug_msg_i && cout << 1+2*i << " < " << sqrt(limit*2) << endl;
+    debug_msg_i && cout << REAL_NUMBER(i) << " < " << sqrt(limit*2) << endl;
     if(is_prime[i]) {
       debug_msg_i && cout << "Chosen" << endl;
-      for (int j = i + (i*(2*i+1)); j <= limit; j += 2*i+1) {
+      for (int j = i + (i*(REAL_NUMBER(i))); j <= limit; j += REAL_NUMBER(i)) {
         debug_msg_j && cout << "j - " << j << endl;
         is_prime[j] = false;
       }
@@ -31,11 +37,11 @@ int main(int argc, char *argv[]) {
 
     if (limit < 1 || ss.fail()) {
       cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
-      return 2;
+      return EXIT_FAILURE;
     }
   } else {
     cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
-    return 2;
+    return EXIT_FAILURE;
   }
 
   int limit_t = floor(limit/2.0);
@@ -50,4 +56,6 @@ int main(int argc, char *argv[]) {
     is_prime[i] && cout << 2*i+1 << " ";
     //cout << is_prime[i] << endl;
   }
+
+  return EXIT_SUCCESS;
 }

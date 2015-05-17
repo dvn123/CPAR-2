@@ -51,10 +51,9 @@ int main(int argc, char *argv[]) {
   sieve(limit_t, is_prime);
 
   //Print
-  cout << "Primes up to " << limit << ":" << endl;
-  for(int i = 0; i < is_prime.size(); i++) {
-    is_prime[i] && cout << 2*i+1 << " ";
-    //cout << is_prime[i] << endl;
+  cout << "Primes up to " << limit << ":" << endl << "2 ";
+  for(int i = 1; i < is_prime.size(); i++) {
+    is_prime[i] && cout << REAL_NUMBER(i) << " ";
   }
 
   return EXIT_SUCCESS;

@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
   //Print
   cout << "Primes up to " << limit << ":" << endl << "2 ";
   for(int i = 1; i < is_prime.size(); i++) {
-    is_prime[i] && cout << 2*i+1 << " ";
+    is_prime[i] && cout << REAL_NUMBER(i) << " ";
     //cout << is_prime[i] << endl;
   }
 

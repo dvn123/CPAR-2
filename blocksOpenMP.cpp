@@ -17,45 +17,56 @@
 #define BLOCK_OWNER(index,p,n) \
 (((p)*(index)+1)-1)/(n))
 
+#define REAL_NUMBER(n) \
+(1+2*n)
+
+#define ARRAY_INDEX(n) \
+((n-1)/2)
+
 using namespace std;
 
-bool debug_msg_primes_used = true;
-bool debug_msg_marking = true;
-bool debug_msg_block_assignment = true;
-bool debug_msg_first_index = true;
+bool debug_msg_primes_used = false;
+bool debug_msg_marking = false;
+bool debug_msg_block_assignment = false;
+bool debug_msg_first_index = false;
 
 int n_threads;
 
 void sieveBlockwise(int limit, vector<bool> &is_prime) {
-  int prime_i = 1;
   #pragma omg parallel for default(shared) private(i)
-  for(int i = 0; i <= n_threads - 1; i++) {
-    int start = BLOCK_LOW(i, n_threads, limit);
-    int end = BLOCK_HIGH(i,n_threads,limit);
+  for(int thread_id = 0; thread_id <= n_threads - 1; thread_id++) {
+    int prime_i = 1;
 
-    if(debug_msg_block_assignment && cout << "Block - " << i << " Start - " << start << " End - " << end << endl;
-    int j = prime_i; //local multiple
+    int start = BLOCK_LOW(thread_id, n_threads, limit);
+    int end = BLOCK_HIGH(thread_id,n_threads,limit);
 
-    while(1+2*prime_i <= sqrt(limit*2)) {
-      if((1+2*prime_i)*(1+2*prime_i) > end) {
+    if(debug_msg_block_assignment) cout << endl << "Block - " << thread_id << " Start - " << start << ", End - " << end << "; Real Start - " << REAL_NUMBER(start) << ", End - " << REAL_NUMBER(end) << endl;
+    int j; //local multiple
+
+    while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
+      if(prime_i > start) {
         j = end;
-        if(debug_msg_first_index) cout << "Block - " << i << " IGNORED J" << endl;
+        if(debug_msg_first_index) cout << "Block - " << thread_id << " Ignored J" << endl;
+      } else if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {
+        j = end;
+        if(debug_msg_first_index) cout << "Block - " << thread_id << " Ignored J" << endl;
       } else {
-        if(start == 0 ) {
-          j = start + prime_i;
+        if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
+          j = start;
         } else {
-          j = start + start % prime_i;
+          j = ARRAY_INDEX(REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + REAL_NUMBER(prime_i));
         }
-        if(debug_msg_first_index) cout << "Block - " << i << " -  First_J - " << j << endl;
+        if(debug_msg_first_index) cout << "Block - " << thread_id << " First_J - " << j << "; Real - " << REAL_NUMBER(j) << endl;
       }
 
-      if(debug_msg_primes_used) cout << "Block - " << i << " Current j = " << j << endl;
+      if(debug_msg_primes_used) cout << "Block - " << thread_id << " Current j = " << j << "; Real - " << REAL_NUMBER(j) << endl;
 
-      for (int k = j + (j * (2 * j + 1)); k <= end; k += 2 * j + 1) {
-        if(debug_msg_marking) cout << "Block - " << i << " k - " << k << endl;
+      for (int k = j; k <= end; k += 2*prime_i +1) {
+        if(debug_msg_marking) cout << "Block - " << thread_id << " k - " << k << "; Real - " << REAL_NUMBER(k) << endl;
         is_prime[k] = false;
       }
 
+      //choose new prime
       #pragma omp barrier
       if(i == 0) { //choose new prime tester
         prime_i++;
@@ -71,7 +82,6 @@ void sieveBlockwise(int limit, vector<bool> &is_prime) {
     }
   }
 }
-
 
 int main(int argc, char *argv[]) {
   int limit = -1;
@@ -98,9 +108,9 @@ int main(int argc, char *argv[]) {
   sieveBlockwise(limit_t, is_prime);
 
   //Print
-  cout << "Primes up to " << limit << ":" << endl;
-  for(int i = 0; i < is_prime.size(); i++) {
-    is_prime[i] && cout << 2*i+1 << " ";
+  cout << "Primes up to " << limit << ":" << endl << "2 ";
+  for(int i = 1; i < is_prime.size(); i++) {
+    is_prime[i] && cout << REAL_NUMBER(i) << " ";
     //cout << is_prime[i] << endl;
   }
 

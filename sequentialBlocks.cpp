@@ -11,12 +11,6 @@
 #define BLOCK_HIGH(id,p,n) \
 (BLOCK_LOW((id)+1,p,n)-1)
 
-#define BLOCK_SIZE(id,p,n) \
-(BLOCK_LOW((id)+1)-BLOCK_LOW(id))
-
-#define BLOCK_OWNER(index,p,n) \
-(((p)*(index)+1)-1)/(n))
-
 #define REAL_NUMBER(n) \
 (1+2*n)
 
@@ -25,10 +19,10 @@
 
 using namespace std;
 
-bool debug_msg_primes_used = false;
-bool debug_msg_marking = false;
-bool debug_msg_block_assignment = false;
-bool debug_msg_first_index = false;
+bool debug_msg_primes_used = true;
+bool debug_msg_marking = true;
+bool debug_msg_block_assignment = true;
+bool debug_msg_first_index = true;
 
 int n_threads;
 
@@ -43,7 +37,7 @@ void sieveBlockwise(int limit, vector<bool> &is_prime) {
     int j; //local multiple
 
     while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
-      if(prime_i > start) {
+      if(prime_i > end) {
         j = end;
         if(debug_msg_first_index) cout << "Block - " << thread_id << " Ignored J" << endl;
       } else if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {

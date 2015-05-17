@@ -11,12 +11,6 @@
 #define BLOCK_HIGH(id,p,n) \
 (BLOCK_LOW((id)+1,p,n)-1)
 
-#define BLOCK_SIZE(id,p,n) \
-(BLOCK_LOW((id)+1)-BLOCK_LOW(id))
-
-#define BLOCK_OWNER(index,p,n) \
-(((p)*(index)+1)-1)/(n))
-
 #define REAL_NUMBER(n) \
 (1+2*n)
 
@@ -33,47 +27,49 @@ bool debug_msg_first_index = true;
 int n_threads;
 
 void sieveBlockwise(int limit, vector<bool> &is_prime) {
+  int prime_i = 1;
+
   #pragma omg parallel for default(shared) private(i)
-  for(int thread_id = 0; thread_id <= n_threads - 1; thread_id++) {
-    int prime_i = 1;
+  for(int thread_n = 0; thread_n <= n_threads - 1; ++thread_n) {
+    int start = BLOCK_LOW(thread_n, n_threads, limit);
+    int end = BLOCK_HIGH(thread_n,n_threads,limit);
 
-    int start = BLOCK_LOW(thread_id, n_threads, limit);
-    int end = BLOCK_HIGH(thread_id,n_threads,limit);
-
-    if(debug_msg_block_assignment) cout << endl << "Block - " << thread_id << " Start - " << start << ", End - " << end << "; Real Start - " << REAL_NUMBER(start) << ", End - " << REAL_NUMBER(end) << endl;
+    if(debug_msg_block_assignment) cout << endl << "Block - " << thread_n << " Start - " << start << ", End - " << end << "; Real Start - " << REAL_NUMBER(start) << ", End - " << REAL_NUMBER(end) << endl;
     int j; //local multiple
 
     while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
-      if(prime_i > start) {
+      if(prime_i > end) {
         j = end;
-        if(debug_msg_first_index) cout << "Block - " << thread_id << " Ignored J" << endl;
+        if(debug_msg_first_index) cout << "Block - " << thread_n << " Ignored J" << endl;
       } else if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {
         j = end;
-        if(debug_msg_first_index) cout << "Block - " << thread_id << " Ignored J" << endl;
+        if(debug_msg_first_index) cout << "Block - " << thread_n << " Ignored J" << endl;
       } else {
         if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
           j = start;
         } else {
           j = ARRAY_INDEX(REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + REAL_NUMBER(prime_i));
         }
-        if(debug_msg_first_index) cout << "Block - " << thread_id << " First_J - " << j << "; Real - " << REAL_NUMBER(j) << endl;
+        if(debug_msg_first_index) cout << "Block - " << thread_n << " First_J - " << j << "; Real - " << REAL_NUMBER(j) << endl;
       }
 
-      if(debug_msg_primes_used) cout << "Block - " << thread_id << " Current j = " << j << "; Real - " << REAL_NUMBER(j) << endl;
+      if(debug_msg_primes_used) cout << "Block - " << thread_n << " Current j = " << j << "; Real - " << REAL_NUMBER(j) << endl;
 
       for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
-        if(debug_msg_marking) cout << "Block - " << thread_id << " k - " << k << "; Real - " << REAL_NUMBER(k) << endl;
+        if(debug_msg_marking) cout << "Block - " << thread_n << " k - " << k << "; Real - " << REAL_NUMBER(k) << endl;
         is_prime[k] = false;
       }
+      #pragma omp barrier
+
 
       //choose new prime
-      #pragma omp barrier
-      if(thread_id == 0) {
-        prime_i++;
-        for(; prime_i  < limit; prime_i++) {
+      if(debug_msg_primes_used) cout << endl;
+      #pragma omp master
+      {
+        for(++prime_i; prime_i  < limit; prime_i++) {
           if(is_prime[prime_i]) {
             j = prime_i;
-            if(debug_msg_primes_used) cout << "Block - " << thread_id << " prime_i - " << prime_i << "; Real - " << REAL_NUMBER(prime_i) << endl;
+            if(debug_msg_primes_used) cout << "Block - " << thread_n << " prime_i - " << prime_i << "; Real - " << REAL_NUMBER(prime_i) << endl;
             break;
           }
         }
@@ -98,8 +94,9 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
-  omp_set_num_threads(omp_get_max_threads()) ;
   n_threads = omp_get_max_threads();
+
+  omp_set_num_threads(n_threads) ;
 
   int limit_t = floor(limit/2.0);
 

@@ -25,10 +25,10 @@
 
 using namespace std;
 
-bool debug_msg_primes_used = false;
-bool debug_msg_marking = false;
-bool debug_msg_block_assignment = false;
-bool debug_msg_first_index = false;
+bool debug_msg_primes_used = true;
+bool debug_msg_marking = true;
+bool debug_msg_block_assignment = true;
+bool debug_msg_first_index = true;
 
 int n_threads;
 
@@ -61,19 +61,19 @@ void sieveBlockwise(int limit, vector<bool> &is_prime) {
 
       if(debug_msg_primes_used) cout << "Block - " << thread_id << " Current j = " << j << "; Real - " << REAL_NUMBER(j) << endl;
 
-      for (int k = j; k <= end; k += 2*prime_i +1) {
+      for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
         if(debug_msg_marking) cout << "Block - " << thread_id << " k - " << k << "; Real - " << REAL_NUMBER(k) << endl;
         is_prime[k] = false;
       }
 
       //choose new prime
       #pragma omp barrier
-      if(i == 0) { //choose new prime tester
+      if(thread_id == 0) {
         prime_i++;
         for(; prime_i  < limit; prime_i++) {
           if(is_prime[prime_i]) {
             j = prime_i;
-            if(debug_msg_primes_used) cout << "Block - " << i << " NEW prime_i - " << prime_i << endl << endl;
+            if(debug_msg_primes_used) cout << "Block - " << thread_id << " prime_i - " << prime_i << "; Real - " << REAL_NUMBER(prime_i) << endl;
             break;
           }
         }
@@ -111,7 +111,6 @@ int main(int argc, char *argv[]) {
   cout << "Primes up to " << limit << ":" << endl << "2 ";
   for(int i = 1; i < is_prime.size(); i++) {
     is_prime[i] && cout << REAL_NUMBER(i) << " ";
-    //cout << is_prime[i] << endl;
   }
 
   return EXIT_SUCCESS;

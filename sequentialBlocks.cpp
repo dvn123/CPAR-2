@@ -60,7 +60,7 @@ void sieveBlockwise(int limit, vector<bool> &is_prime) {
 
       if(debug_msg_primes_used) cout << "Block - " << thread_id << " Current j = " << j << "; Real - " << REAL_NUMBER(j) << endl;
 
-      for (int k = j; k <= end; k += 2*prime_i +1) {
+      for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
         if(debug_msg_marking) cout << "Block - " << thread_id << " k - " << k << "; Real - " << REAL_NUMBER(k) << endl;
         is_prime[k] = false;
       }

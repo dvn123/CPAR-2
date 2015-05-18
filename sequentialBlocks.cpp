@@ -47,7 +47,11 @@ void sieveBlockwise(int limit, vector<bool> &is_prime) {
         if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
           j = start;
         } else {
-          j = ARRAY_INDEX(REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + REAL_NUMBER(prime_i));
+          int i_temp = 1;
+          while((REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i)) % 2 == 0) {
+            i_temp++;
+          }
+          j = ARRAY_INDEX(REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i));
         }
         if(debug_msg_first_index) cout << "Block - " << thread_id << " First_J - " << j << "; Real - " << REAL_NUMBER(j) << endl;
       }

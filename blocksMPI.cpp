@@ -44,7 +44,6 @@ void print(string  s, int block) {
   }
 }
 
-
 void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end) {
   int prime_i = 1;
 

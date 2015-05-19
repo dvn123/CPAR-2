@@ -29,7 +29,7 @@ using namespace std;
 
 bool debug_msg_primes_used = false;
 bool debug_msg_marking = false;
-bool debug_msg_block_assignment = false;
+bool debug_msg_block_assignment = true;
 bool debug_msg_first_index = false;
 bool debug_msg_primes_found = false;
 vector<int> blocks_allowed_to_print;
@@ -43,28 +43,29 @@ void print(string  s, int block) {
     }
 }
 
-void sieveBlockwise(int limit, vector<bool> &is_prime, vector<bool> &is_prime_first, int start, int end, int end_first) {
-
-}
-
-
 int main(int argc, char *argv[]) {
 
-    blocks_allowed_to_print.push_back(3);
+    blocks_allowed_to_print.push_back(0);
     //blocks_allowed_to_print.push_back(1);
     n_threads = omp_get_max_threads();
 
     int limit = -1;
-    if (argc == 2) {
-        stringstream ss(argv[--argc]);
+    if (argc == 3) {
+        stringstream ss(argv[argc-2]);
         ss >> limit;
 
+        stringstream ss2(argv[argc-1]);
+        ss2 >> n_threads;
+
+        if(n_threads > omp_get_max_threads())
+            n_threads = omp_get_max_threads();
+
         if (limit < 1 || ss.fail()) {
-            cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+            cerr << "USAGE:\n  sieve LIMIT n_threads\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "] " << endl;
             return -1;
         }
     } else {
-        cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+        cerr << "USAGE:\n  sieve LIMIT n_threads\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
         return -1;
     }
 
@@ -74,11 +75,13 @@ int main(int argc, char *argv[]) {
     }
     int global_count = 0;
 
+    omp_set_num_threads(n_threads);
+
     clock_t begin_time = clock();
 
 
 
-    #pragma omp parallel private(thread_id)
+    #pragma omp parallel private(thread_id) num_threads(n_threads)
     {
         thread_id = omp_get_thread_num();
         int limit_t = floor(limit / 2.0);

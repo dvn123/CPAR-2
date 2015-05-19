@@ -3,23 +3,26 @@
 #include <sstream>
 #include <cmath>
 #include <vector>
-#include <omp.h>
+#include <ctime>
+
+#define REAL_NUMBER(n) \
+(1+2*n)
+
+#define ARRAY_INDEX(n) \
+((n-1)/2)
 
 using namespace std;
 
 bool debug_msg_i = false;
 bool debug_msg_j = false;
-bool print_primes = false;
 
-void sieve(long limit, vector<bool> &is_prime) {
-  long sq = sqrt(limit*2);
-  //#pragma omp parallel for shared(is_prime) schedule(dynamic)
-  for(long i = 1; i <= (sq-1)/2; i++) {
+void sieve(int limit, vector<bool> &is_prime) {
+  for(int i = 1; REAL_NUMBER(i)*REAL_NUMBER(i) <= limit*2; i++) {
     debug_msg_i && cout << "i - " << i << endl;
-    debug_msg_i && cout << 1+2*i << " < " << sqrt(limit*2) << endl;
+    debug_msg_i && cout << REAL_NUMBER(i) << " < " << sqrt(limit*2) << endl;
     if(is_prime[i]) {
       debug_msg_i && cout << "Chosen" << endl;
-      for (long j = i + (i*(2*i+1)); j <= limit; j += 2*i+1) {
+      for (int j = i + (i*(REAL_NUMBER(i))); j <= limit; j += REAL_NUMBER(i)) {
         debug_msg_j && cout << "j - " << j << endl;
         is_prime[j] = false;
       }
@@ -28,38 +31,37 @@ void sieve(long limit, vector<bool> &is_prime) {
 }
 
 int main(int argc, char *argv[]) {
-  long limit = -1;
+  int limit = -1;
   if (argc == 2) {
     stringstream ss(argv[--argc]);
     ss >> limit;
 
     if (limit < 1 || ss.fail()) {
-      cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<long>::max() << "]" << endl;
-      return 2;
+      cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+      return EXIT_FAILURE;
     }
   } else {
-    cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<long>::max() << "]" << endl;
-    return 2;
+    cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+    return EXIT_FAILURE;
   }
 
-  //omp_set_num_threads(omp_get_num_procs());
-
-  long limit_t = floor(limit/2.0);
-
-#pragma omp parallel
-  printf("Hello, world.\n");
-
+  int limit_t = floor(limit/2.0);
 
   vector<bool> is_prime(limit_t, true);
+  time_t begin = time(nullptr);
 
-  clock_t begin_time = clock();
   sieve(limit_t, is_prime);
 
-  cout << "Time: " << float(clock () - begin_time)/CLOCKS_PER_SEC;
+  time_t end = time(nullptr);
+  int count = 0;
+
+  for(int i = 0; i < is_prime.size(); i++) {
+    is_prime[i] && count++;
+  }
 
   //Print
-  print_primes && cout << endl << "Primes up to " << limit << ":" << endl;
-  for(int i = 0; i < is_prime.size(); i++) {
-    print_primes && is_prime[i] && cout << 2*i+1 << " ";
-  }
+  cout << "Number of primes up to " << limit << ": " << count << endl;
+  cout << "Time: " << end-begin << endl;
+
+  return EXIT_SUCCESS;
 }

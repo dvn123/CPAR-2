@@ -44,7 +44,7 @@ void print(string  s, int block) {
   }
 }
 
-void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end) {
+void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end, vector<bool> &is_prime_first, int end_first) {
   int prime_i = 1;
 
   if(debug_msg_block_assignment) print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " + to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n", thread_id);
@@ -75,6 +75,12 @@ void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end) {
         is_prime[k-start] = false;
     }
 
+    for (int h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
+      if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
+      if(prime_i != h)
+        is_prime_first[h] = false;
+    }
+
     //choose new prime
     if(thread_id == 0) {
       //if (debug_msg_primes_used) cout << endl;
@@ -85,8 +91,16 @@ void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end) {
           break;
         }
       }
+    } else {
+      for (++prime_i; prime_i < limit; prime_i++) {
+        //print(string("Block - ") + to_string(thread_id) + " prime_i TEST - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
+        if (is_prime_first[prime_i]) {
+          //if (debug_msg_primes_used) print(string("Block - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n\n", thread_id);
+          break;
+        }
+      }
     }
-    MPI_Bcast(&prime_i,  1, MPI_INT, 0, MPI_COMM_WORLD);
+    //MPI_Bcast(&prime_i,  1, MPI_INT, 0, MPI_COMM_WORLD);
     if (debug_msg_primes_used) print(string("\nBlock - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
   }
 }
@@ -130,9 +144,13 @@ int main(int argc, char *argv[]) {
   int start = BLOCK_LOW(thread_id, n_threads, limit_t);
   int end = BLOCK_HIGH(thread_id,n_threads,limit_t);
 
-  vector<bool> is_prime((end - start) + 1, true);
+  int end_first = BLOCK_HIGH(0, n_threads, limit_t);
 
-  sieveBlockwise(limit_t, is_prime, start, end);
+  vector<bool> is_prime((end - start) + 1, true);
+  vector<bool> is_prime_first((end - start) + 1, true);
+
+
+  sieveBlockwise(limit_t, is_prime, start, end, is_prime_first, end_first);
 
   int count = 0;
   for (int i = 0; i < is_prime.size(); i++) {

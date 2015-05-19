@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
     //blocks_allowed_to_print.push_back(1);
     n_threads = omp_get_max_threads();
 
-    int limit = -1;
+    long limit = -1;
     if (argc == 3) {
         stringstream ss(argv[argc-2]);
         ss >> limit;
@@ -61,11 +61,11 @@ int main(int argc, char *argv[]) {
             n_threads = omp_get_max_threads();
 
         if (limit < 1 || ss.fail()) {
-            cerr << "USAGE:\n  sieve LIMIT n_threads\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "] " << endl;
+            cerr << "USAGE:\n  sieve LIMIT n_threads\nwhere LIMIT in the range [1, " << numeric_limits<long>::max() << "] " << endl;
             return -1;
         }
     } else {
-        cerr << "USAGE:\n  sieve LIMIT n_threads\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
+        cerr << "USAGE:\n  sieve LIMIT n_threads\n\nwhere LIMIT in the range [1, " << numeric_limits<long>::max() << "]" << endl;
         return -1;
     }
 
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
         if (n_threads == 0) printf("Too many processes.\n");
         return -1;
     }
-    int global_count = 0;
+    long global_count = 0;
 
     omp_set_num_threads(n_threads);
 
@@ -84,22 +84,22 @@ int main(int argc, char *argv[]) {
     #pragma omp parallel private(thread_id) num_threads(n_threads)
     {
         thread_id = omp_get_thread_num();
-        int limit_t = floor(limit / 2.0);
+        long limit_t = floor(limit / 2.0);
 
-        int start = BLOCK_LOW(thread_id, n_threads, limit_t);
-        int end = BLOCK_HIGH(thread_id, n_threads, limit_t);
+        long start = BLOCK_LOW(thread_id, n_threads, limit_t);
+        long end = BLOCK_HIGH(thread_id, n_threads, limit_t);
 
-        int end_first = BLOCK_HIGH(0, n_threads, limit_t);
+        long end_first = BLOCK_HIGH(0, n_threads, limit_t);
 
 
         vector<bool> is_prime((end - start) + 1, true);
         vector<bool> is_prime_first((end - start) + 1, true);
 
 
-        int prime_i = 1;
+        long prime_i = 1;
 
         if(debug_msg_block_assignment) print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " + to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n", thread_id);
-        int j; //local multiple
+        long j; //local multiple
 
 
         while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
                 if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
                     j = start;
                 } else {
-                    int i_temp = 1;
+                    long i_temp = 1;
                     while((REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i)) % 2 == 0) {
                         i_temp++;
                     }
@@ -119,13 +119,13 @@ int main(int argc, char *argv[]) {
                 if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
             }
 
-            for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
+            for (long k = j; k <= end; k += REAL_NUMBER(prime_i)) {
                 if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k-start) + "\n", thread_id);
                 if(prime_i != k)
                     is_prime[k-start] = false;
             }
 
-            for (int h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
+            for (long h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
                 if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
                 if(prime_i != h)
                     is_prime_first[h] = false;
@@ -153,8 +153,8 @@ int main(int argc, char *argv[]) {
             if (debug_msg_primes_used) print(string("\nBlock - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
         }
 
-        int count = 0;
-        for (int i = 0; i < is_prime.size(); i++) {
+        long count = 0;
+        for (long i = 0; i < is_prime.size(); i++) {
             //print(to_string(is_prime[i]) + " ", thread_id);
             if (is_prime[i] == true) {
                 //if (debug_msg_primes_found) print(to_string(REAL_NUMBER(i) + (REAL_NUMBER(start) - 1)) + ", ", thread_id);
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 
     //Print
     if(thread_id == 0) {
-        cout << "Counted primes up to " << limit << ": "  << global_count << endl << "Time: " << (end_time-begin_time)/CLOCKS_PER_SEC << endl;
+        cout << "Counted primes up to " << limit << ": "  << global_count << endl << "CPU Time: " << (end_time-begin_time)/double(CLOCKS_PER_SEC) << endl;
     }
 
     return 0;

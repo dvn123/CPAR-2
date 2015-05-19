@@ -45,10 +45,10 @@ void print(string  s, int block) {
 }
 
 void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end, vector<bool> &is_prime_first, int end_first) {
-  int prime_i = 1;
+  long prime_i = 1;
 
   if(debug_msg_block_assignment) print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " + to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n", thread_id);
-  int j; //local multiple
+  long j; //local multiple
 
 
   while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
@@ -60,7 +60,7 @@ void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end, vecto
       if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
         j = start;
       } else {
-        int i_temp = 1;
+        long i_temp = 1;
         while((REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i)) % 2 == 0) {
           i_temp++;
         }
@@ -139,12 +139,12 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  int limit_t = floor(limit/2.0);
+  long limit_t = floor(limit/2.0);
 
-  int start = BLOCK_LOW(thread_id, n_threads, limit_t);
-  int end = BLOCK_HIGH(thread_id,n_threads,limit_t);
+  long start = BLOCK_LOW(thread_id, n_threads, limit_t);
+  long end = BLOCK_HIGH(thread_id,n_threads,limit_t);
 
-  int end_first = BLOCK_HIGH(0, n_threads, limit_t);
+  long end_first = BLOCK_HIGH(0, n_threads, limit_t);
 
   vector<bool> is_prime((end - start) + 1, true);
   vector<bool> is_prime_first((end - start) + 1, true);
@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
 
   sieveBlockwise(limit_t, is_prime, start, end, is_prime_first, end_first);
 
-  int count = 0;
-  for (int i = 0; i < is_prime.size(); i++) {
+  long count = 0;
+  for (long i = 0; i < is_prime.size(); i++) {
     //print(to_string(is_prime[i]) + " ", thread_id);
     if (is_prime[i] == true) {
       if(debug_msg_primes_found) print(to_string(REAL_NUMBER(i) + (REAL_NUMBER(start)-1)) + ", ", thread_id);
@@ -163,9 +163,9 @@ int main(int argc, char *argv[]) {
 
   //print(to_string(is_prime[123]), thread_id);
 
-  int global_count;
+  long global_count;
 
-  MPI_Reduce(&count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&count, &global_count, 1, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   runtime += MPI_Wtime();
 
   //Print

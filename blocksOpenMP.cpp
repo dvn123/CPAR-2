@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
         long j; //local multiple
 
 
-        while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) < limit) {
+        while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) < limit_t*2) {
             if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {
                 j = end+1;
                 if(debug_msg_first_index)  print(string("\nBlock - ") + to_string(thread_id) + " Ignored_J \n", thread_id);
@@ -122,29 +122,24 @@ int main(int argc, char *argv[]) {
                 }
                 if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
             }
+            if(REAL_NUMBER(j) < REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i)) {
+                j = ARRAY_INDEX(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i));
+            }
+
 
             long h = prime_i;
             for (long k = j; k <= end; k += REAL_NUMBER(prime_i)) {
                 if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k-start) + "\n", thread_id);
-                if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
+                //if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
                 if(prime_i != k)
                     is_prime[k-start] = false;
-                if(prime_i != h)
+                if(prime_i != h && h <= (end-start))
                     is_prime_first[h] = false;
 
                 h += REAL_NUMBER(prime_i);
             }
 
-
-            /*for (long h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
-                if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
-                if(prime_i != h)
-                    is_prime_first[h] = false;
-            }*/
-
-            //choose new prime
             if(thread_id == 0) {
-                //if (debug_msg_primes_used) cout << endl;
                 for (++prime_i; prime_i < limit_t; prime_i++) {
                     if (is_prime[prime_i]) {
                         j = prime_i;

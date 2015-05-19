@@ -68,6 +68,10 @@ void sieveBlockwise(long limit, vector<bool> &is_prime, long start, long end, ve
       }
       if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
     }
+    if(REAL_NUMBER(j) < REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i)) {
+      j = ARRAY_INDEX(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i));
+    }
+
 
     long h = prime_i;
     for (long k = j; k <= end; k += REAL_NUMBER(prime_i)) {
@@ -150,7 +154,8 @@ int main(int argc, char *argv[]) {
   vector<bool> is_prime_first((end - start) + 1, true);
 
 
-  sieveBlockwise(limit_t, is_prime, start, end, is_prime_first, end_first);
+  sieveBlockwise(limit_t, is_prime, start, end, is_prime_first, end_first); // sieveBlockwise(long limit, vector<bool> &is_prime, long start, long end, vector<bool> &is_prime_first, long end_first) {
+
 
   long count = 0;
   for (long i = 0; i < is_prime.size(); i++) {

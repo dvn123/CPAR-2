@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cmath>
 #include <vector>
+#include <ctime>
 
 #define REAL_NUMBER(n) \
 (1+2*n)
@@ -47,14 +48,20 @@ int main(int argc, char *argv[]) {
   int limit_t = floor(limit/2.0);
 
   vector<bool> is_prime(limit_t, true);
+  time_t begin = time(nullptr);
 
   sieve(limit_t, is_prime);
 
-  //Print
-  cout << "Primes up to " << limit << ":" << endl << "2 ";
-  for(int i = 1; i < is_prime.size(); i++) {
-    is_prime[i] && cout << REAL_NUMBER(i) << " ";
+  time_t end = time(nullptr);
+  int count = 0;
+
+  for(int i = 0; i < is_prime.size(); i++) {
+    is_prime[i] && count++;
   }
+
+  //Print
+  cout << "Number of primes up to " << limit << ": " << count << endl;
+  cout << "Time: " << end-begin << endl;
 
   return EXIT_SUCCESS;
 }

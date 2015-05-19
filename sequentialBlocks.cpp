@@ -115,6 +115,7 @@ void sieve(int n_threads, int limit, int &count) {
   vector<bool> is_prime(limit, true);
 
   int local_count;
+  time_t begin = time(nullptr);
   for (thread_id = 0; thread_id <= n_threads - 1; thread_id++) {
     int start = BLOCK_LOW(thread_id, n_threads, limit);
     int end = BLOCK_HIGH(thread_id,n_threads,limit);
@@ -133,11 +134,13 @@ void sieve(int n_threads, int limit, int &count) {
     count += local_count;
   }
 
+  time_t end = time(nullptr);
   cout << "Primes up to " << REAL_LIMIT(limit) << ":" << endl << "2 ";
   for (int i = 1; i < is_prime.size(); i++) {
     if(is_prime[i])
       cout << REAL_NUMBER(i) << " ";
   }
+  cout << endl << "CPU Time: " << end-begin << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -148,6 +151,8 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
 
   n_threads = omp_get_max_threads();
+
+
 
   sieve(n_threads, limit, count);
 

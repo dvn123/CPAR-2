@@ -5,20 +5,25 @@
 #include <vector>
 #include <omp.h>
 
-#define BLOCK_LOW(id, p, n) \
+#define BLOCK_LOW(id,p,n) \
 ((id)*(n)/(p))
 
-#define BLOCK_HIGH(id, p, n) \
+#define BLOCK_HIGH(id,p,n) \
 (BLOCK_LOW((id)+1,p,n)-1)
 
 #define REAL_NUMBER(n) \
-(1+2*n)
+(2*n+1)
 
 #define ARRAY_INDEX(n) \
 ((n-1)/2)
 
-#define REAL_LIMIT(n) \
-(n*2)
+//mpi doesn't support c++11...
+template < typename T > std::string to_string( const T& n )
+{
+    std::ostringstream stm ;
+    stm << n ;
+    return stm.str() ;
+}
 
 using namespace std;
 
@@ -29,165 +34,143 @@ bool debug_msg_first_index = false;
 bool debug_msg_primes_found = false;
 vector<int> blocks_allowed_to_print;
 
-void print(string s, bool type, int thread_id) {
-    if (!type)
-        return;
-    for (int i = 0; i < blocks_allowed_to_print.size(); i++) {
-        if (thread_id == blocks_allowed_to_print[i]) {
-            cout << s;
-        }
+int n_threads, thread_id;
 
+void print(string  s, int block) {
+    for(int i = 0; i < blocks_allowed_to_print.size(); i++) {
+        if(block == blocks_allowed_to_print[i])
+            cout << s;
     }
 }
 
-int checkArgs(int argc, char *argv[], int &limit) {
-    //blocks_allowed_to_print.push_back(0);
-    //blocks_allowed_to_print.push_back(3);
-    //blocks_allowed_to_print.push_back(2);
-    //blocks_allowed_to_print.push_back(3);
+void sieveBlockwise(int limit, vector<bool> &is_prime, vector<bool> &is_prime_first, int start, int end, int end_first) {
 
+}
+
+
+int main(int argc, char *argv[]) {
+
+    blocks_allowed_to_print.push_back(3);
+    //blocks_allowed_to_print.push_back(1);
+    n_threads = omp_get_max_threads();
+
+    int limit = -1;
     if (argc == 2) {
         stringstream ss(argv[--argc]);
         ss >> limit;
-        limit = floor(limit / 2.0);
-
 
         if (limit < 1 || ss.fail()) {
             cerr << "USAGE:\n  sieve LIMIT\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
-            return EXIT_FAILURE;
+            return -1;
         }
     } else {
         cerr << "USAGE:\n  sieve LIMIT\n\nwhere LIMIT in the range [1, " << numeric_limits<int>::max() << "]" << endl;
-        return EXIT_FAILURE;
+        return -1;
     }
-    return EXIT_SUCCESS;
-}
 
-int getFirstMultipleInRange(int prime, int start, int end, int thread_id) {
-    if (REAL_NUMBER(prime) * REAL_NUMBER(prime) > REAL_NUMBER(end)) {
-        print(string("\nBlock - ") + to_string(thread_id) + " Ignored - " + to_string(prime) + "; Real -" +
-              to_string(REAL_NUMBER(prime)) + "\n", debug_msg_first_index, thread_id);
-        return end + 1;
-    } else {
-        if (REAL_NUMBER(start) % REAL_NUMBER(prime) == 0) {
-            return start;
-        } else {
-            int i_temp = 1;
-            while ((REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime)) + i_temp * REAL_NUMBER(prime)) % 2 ==
-                   0) {
-                i_temp++;
-            }
-            return ARRAY_INDEX(
-                    REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime)) + i_temp * REAL_NUMBER(prime));
-        }
+    if ((2 + (limit - 1 / n_threads)) < (int) sqrt((double) limit)) {
+        if (n_threads == 0) printf("Too many processes.\n");
+        return -1;
     }
-}
+    int global_count = 0;
 
-int chooseNewPrime(int prime, int limit, vector<bool> &is_prime, int thread_id) {
-    for (prime = ++prime; prime < limit; prime++) {
-        if (is_prime[prime]) {
-            print(string("\nBlock - ") + to_string(thread_id) + " original_prime - " + to_string(prime) + "; Real - " +
-                  to_string(REAL_NUMBER(prime)) + "\n", debug_msg_primes_used, thread_id);
-            return prime;
-        }
-    }
-    exit(EXIT_FAILURE);
-}
+    clock_t begin_time = clock();
 
-void sieveBlock(int start, int end, int limit, vector<bool> &is_prime, int thread_id, int original_prime, int end_first, vector<bool> &is_prime_first) {
 
-    int local_multiple;
 
-    while (REAL_NUMBER(original_prime) * REAL_NUMBER(original_prime) <= REAL_LIMIT(limit)) {
-        local_multiple = getFirstMultipleInRange(original_prime, start, end, thread_id);
-        print(string("Block - ") + to_string(thread_id) + " First Multiple - " + to_string(local_multiple) +
-              "; Real - " + to_string(REAL_NUMBER(local_multiple)) + "\n", debug_msg_first_index, thread_id);
-
-        //Mark the multiples in the block
-        for (int k = local_multiple; k <= end; k += REAL_NUMBER(original_prime)) {
-            print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " +
-                  to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k - start) + "\n", debug_msg_marking,
-                  thread_id);
-            if (original_prime != k)
-                is_prime[k-start] = false;
-        }
-
-        //Every thread has its own list - improvement 2
-        if(thread_id != 0) {
-            for (int k = original_prime; k <= end_first; k += REAL_NUMBER(original_prime)) {
-                print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k - start) + "\n", debug_msg_marking, thread_id);
-                if (original_prime != k)
-                    is_prime_first[k] = false;
-            }
-        }
-
-        if(thread_id != 0)
-            original_prime = chooseNewPrime(original_prime, limit, is_prime_first, thread_id);
-        else
-            original_prime = chooseNewPrime(original_prime, limit, is_prime, thread_id);
-    }
-}
-
-void sieve(int n_threads, int limit, int &count) {
-    int original_prime = 1;
-
-    #pragma omp parallel shared(count) shared(original_prime)
+    #pragma omp parallel private(thread_id)
     {
-        int thread_id = omp_get_thread_num();
+        thread_id = omp_get_thread_num();
+        int limit_t = floor(limit / 2.0);
 
-        int local_count;
-        int start = BLOCK_LOW(thread_id, n_threads, limit);
-        int end = BLOCK_HIGH(thread_id, n_threads, limit);
+        int start = BLOCK_LOW(thread_id, n_threads, limit_t);
+        int end = BLOCK_HIGH(thread_id, n_threads, limit_t);
 
-        vector<bool> is_prime(end - start + 1, true);
-
-        vector<bool> is_prime_first;
-        int end_first = BLOCK_HIGH(0, n_threads, limit);
+        int end_first = BLOCK_HIGH(0, n_threads, limit_t);
 
 
-        if(thread_id != 0) {
-            for(int i = 0; i < end_first; i++)
-                is_prime_first.push_back(true);
+        vector<bool> is_prime((end - start) + 1, true);
+        vector<bool> is_prime_first((end - start) + 1, true);
+
+
+        int prime_i = 1;
+
+        if(debug_msg_block_assignment) print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " + to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n", thread_id);
+        int j; //local multiple
+
+
+        while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
+            if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {
+                j = end+1;
+                if(debug_msg_first_index)  print(string("\nBlock - ") + to_string(thread_id) + " Ignored_J \n", thread_id);
+            } else {
+                if(REAL_NUMBER(start) % REAL_NUMBER(prime_i) == 0) {
+                    j = start;
+                } else {
+                    int i_temp = 1;
+                    while((REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i)) % 2 == 0) {
+                        i_temp++;
+                    }
+                    j = ARRAY_INDEX(REAL_NUMBER(start) - (REAL_NUMBER(start) % REAL_NUMBER(prime_i)) + i_temp*REAL_NUMBER(prime_i));
+                }
+                if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
+            }
+
+            for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
+                if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k-start) + "\n", thread_id);
+                if(prime_i != k)
+                    is_prime[k-start] = false;
+            }
+
+            for (int h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
+                if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
+                if(prime_i != h)
+                    is_prime_first[h] = false;
+            }
+
+            //choose new prime
+            if(thread_id == 0) {
+                //if (debug_msg_primes_used) cout << endl;
+                for (++prime_i; prime_i < limit; prime_i++) {
+                    if (is_prime[prime_i]) {
+                        j = prime_i;
+                        //if (debug_msg_primes_used) print(string("Block - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n\n", thread_id);
+                        break;
+                    }
+                }
+            } else {
+                for (++prime_i; prime_i < limit; prime_i++) {
+                    //print(string("Block - ") + to_string(thread_id) + " prime_i TEST - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
+                    if (is_prime_first[prime_i]) {
+                        //if (debug_msg_primes_used) print(string("Block - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n\n", thread_id);
+                        break;
+                    }
+                }
+            }
+            if (debug_msg_primes_used) print(string("\nBlock - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
         }
 
-
-
-        local_count = 0;
-        print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " +
-              to_string(end) +
-              "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n",
-              debug_msg_block_assignment, thread_id);
-
-        sieveBlock(start, end, limit, is_prime, thread_id, original_prime, end_first, is_prime_first);
-
+        int count = 0;
         for (int i = 0; i < is_prime.size(); i++) {
+            //print(to_string(is_prime[i]) + " ", thread_id);
             if (is_prime[i] == true) {
-                print(to_string(REAL_NUMBER(i) + (REAL_NUMBER(start) - 1)) + ", ", debug_msg_primes_found, thread_id);
-                local_count++;
+                //if (debug_msg_primes_found) print(to_string(REAL_NUMBER(i) + (REAL_NUMBER(start) - 1)) + ", ", thread_id);
+                count++;
             }
         }
-        //cout << "Block - " << thread_id << " count - " << local_count << endl;
-
+       //cout << endl << endl << "Block - " << thread_id << " Count = " << count << endl;
 
         #pragma omp atomic
-        count += local_count;
+        global_count += count;
     }
 
+    clock_t end_time = clock();
 
-    cout << "Counted primes up to " << REAL_LIMIT(limit) << ": " << count << endl << "Time: " << 234 << endl;
 
-}
+    //Print
+    if(thread_id == 0) {
+        cout << "Counted primes up to " << limit << ": "  << global_count << endl << "Time: " << (end_time-begin_time)/CLOCKS_PER_SEC << endl;
+    }
 
-int main(int argc, char *argv[]) {
-    int limit = -1, n_threads = omp_get_max_threads();
-    int count = 0;
-
-    if (checkArgs(argc, argv, limit) != EXIT_SUCCESS)
-        return EXIT_FAILURE;
-
-    omp_set_num_threads(n_threads);
-
-    sieve(n_threads, limit, count);
-
-    return EXIT_SUCCESS;
+    return 0;
 }

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <ctime>
+#include <sys/time.h>
 
 #define REAL_NUMBER(n) \
 (1+2*n)
@@ -51,7 +52,10 @@ int main(int argc, char *argv[]) {
 
   timespec start, end;
 
-  clock_gettime(CLOCK_REALTIME, &start);
+  struct timeval t_start;
+  gettimeofday(&t_start,NULL);
+
+  (CLOCK_REALTIME, &start);
   clock_t begin_cpu = clock();
 
 
@@ -60,6 +64,10 @@ int main(int argc, char *argv[]) {
   clock_t end_cpu = clock();
   clock_gettime(CLOCK_REALTIME, &end);
 
+  struct timeval t_end;
+  gettimeofday(&t_end,NULL);
+
+
   long count = 0;
 
   for(long i = 0; i < is_prime.size(); i++) {
@@ -67,7 +75,7 @@ int main(int argc, char *argv[]) {
   }
   //Print
   cout << "Number of primes up to " << limit << ": " << count << endl;
-  //cout << "Time: " << (end.tv_nsec-start.tv_nsec) << endl;
+  cout << "Time: " << (t_end.tv_sec + (t_end.tv_usec*pow(10,-6)))-(t_start.tv_sec+(t_start.tv_usec/pow(10,6))) << endl;
   cout << "CPU Time: " << (end_cpu-begin_cpu)/double(CLOCKS_PER_SEC) << endl;
 
   return EXIT_SUCCESS;

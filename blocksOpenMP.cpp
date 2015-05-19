@@ -79,6 +79,9 @@ int main(int argc, char *argv[]) {
 
     clock_t begin_time = clock();
 
+    struct timeval t_start;
+    gettimeofday(&t_start,NULL);
+
 
 
     #pragma omp parallel private(thread_id) num_threads(n_threads)
@@ -168,11 +171,16 @@ int main(int argc, char *argv[]) {
     }
 
     clock_t end_time = clock();
+    struct timeval t_end;
+    gettimeofday(&t_end,NULL);
+
 
 
     //Print
     if(thread_id == 0) {
-        cout << "Counted primes up to " << limit << ": "  << global_count << endl << "CPU Time: " << (end_time-begin_time)/double(CLOCKS_PER_SEC) << endl;
+        cout << "Counted primes up to " << limit << ": "  << global_count << endl;
+        cout << "Time: " << (t_end.tv_sec + (t_end.tv_usec*pow(10,-6)))-(t_start.tv_sec+(t_start.tv_usec/pow(10,6))) << endl;
+        cout << "CPU Time: " << (end_time-begin_time)/double(CLOCKS_PER_SEC) << endl;
     }
 
     return 0;

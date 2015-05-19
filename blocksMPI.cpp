@@ -44,7 +44,7 @@ void print(string  s, int block) {
   }
 }
 
-void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end, vector<bool> &is_prime_first, int end_first) {
+void sieveBlockwise(long limit, vector<bool> &is_prime, long start, long end, vector<bool> &is_prime_first, long end_first) {
   long prime_i = 1;
 
   if(debug_msg_block_assignment) print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " + to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " + to_string(REAL_NUMBER(end)) + "\n", thread_id);
@@ -69,16 +69,16 @@ void sieveBlockwise(int limit, vector<bool> &is_prime, int start, int end, vecto
       if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
     }
 
-    for (int k = j; k <= end; k += REAL_NUMBER(prime_i)) {
+    long h = prime_i;
+    for (long k = j; k <= end; k += REAL_NUMBER(prime_i)) {
       if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k-start) + "\n", thread_id);
+      if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
       if(prime_i != k)
         is_prime[k-start] = false;
-    }
-
-    for (int h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
-      if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
       if(prime_i != h)
         is_prime_first[h] = false;
+
+      h += REAL_NUMBER(prime_i);
     }
 
     //choose new prime
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
 
   double runtime = -MPI_Wtime();
 
-  int limit = -1;
+  long limit = -1;
   if (argc == 2) {
     stringstream ss(argv[--argc]);
     ss >> limit;

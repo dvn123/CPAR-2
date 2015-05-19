@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 #include <omp.h>
+#include <sys/time.h>
+
 
 #define BLOCK_LOW(id,p,n) \
 ((id)*(n)/(p))
@@ -29,7 +31,7 @@ using namespace std;
 
 bool debug_msg_primes_used = false;
 bool debug_msg_marking = false;
-bool debug_msg_block_assignment = true;
+bool debug_msg_block_assignment = false;
 bool debug_msg_first_index = false;
 bool debug_msg_primes_found = false;
 vector<int> blocks_allowed_to_print;
@@ -44,7 +46,6 @@ void print(string  s, int block) {
 }
 
 int main(int argc, char *argv[]) {
-
     blocks_allowed_to_print.push_back(0);
     //blocks_allowed_to_print.push_back(1);
     n_threads = omp_get_max_threads();
@@ -74,8 +75,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     long global_count = 0;
-
     omp_set_num_threads(n_threads);
+
+
 
     clock_t begin_time = clock();
 
@@ -83,8 +85,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&t_start,NULL);
 
 
-
-    #pragma omp parallel private(thread_id) num_threads(n_threads)
+    #pragma omp parallel default(shared) private(thread_id) num_threads(n_threads)
     {
         thread_id = omp_get_thread_num();
         long limit_t = floor(limit / 2.0);
@@ -105,7 +106,7 @@ int main(int argc, char *argv[]) {
         long j; //local multiple
 
 
-        while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) <= limit*2) {
+        while(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) < limit) {
             if(REAL_NUMBER(prime_i)*REAL_NUMBER(prime_i) > REAL_NUMBER(end)) {
                 j = end+1;
                 if(debug_msg_first_index)  print(string("\nBlock - ") + to_string(thread_id) + " Ignored_J \n", thread_id);
@@ -122,22 +123,29 @@ int main(int argc, char *argv[]) {
                 if(debug_msg_first_index) print(string("Block - ") + to_string(thread_id) + " First_J - " + to_string(j) + "; Real - " + to_string(REAL_NUMBER(j)) + "\n", thread_id);
             }
 
+            long h = prime_i;
             for (long k = j; k <= end; k += REAL_NUMBER(prime_i)) {
                 if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " k - " + to_string(k) + "; Real - " + to_string(REAL_NUMBER(k)) + "; Vector - " + to_string(k-start) + "\n", thread_id);
+                if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
                 if(prime_i != k)
                     is_prime[k-start] = false;
+                if(prime_i != h)
+                    is_prime_first[h] = false;
+
+                h += REAL_NUMBER(prime_i);
             }
 
-            for (long h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
+
+            /*for (long h = prime_i; h <= end_first; h += REAL_NUMBER(prime_i)) {
                 if(debug_msg_marking) print(string("Block - ") + to_string(thread_id) + " fake k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
                 if(prime_i != h)
                     is_prime_first[h] = false;
-            }
+            }*/
 
             //choose new prime
             if(thread_id == 0) {
                 //if (debug_msg_primes_used) cout << endl;
-                for (++prime_i; prime_i < limit; prime_i++) {
+                for (++prime_i; prime_i < limit_t; prime_i++) {
                     if (is_prime[prime_i]) {
                         j = prime_i;
                         //if (debug_msg_primes_used) print(string("Block - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n\n", thread_id);
@@ -145,7 +153,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             } else {
-                for (++prime_i; prime_i < limit; prime_i++) {
+                for (++prime_i; prime_i < limit_t; prime_i++) {
                     //print(string("Block - ") + to_string(thread_id) + " prime_i TEST - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n", thread_id);
                     if (is_prime_first[prime_i]) {
                         //if (debug_msg_primes_used) print(string("Block - ") + to_string(thread_id) + " prime_i - " + to_string(prime_i) + "; Real - " + to_string(REAL_NUMBER(prime_i)) + "\n\n", thread_id);

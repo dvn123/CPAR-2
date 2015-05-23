@@ -74,22 +74,50 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     long global_count = 0;
-    omp_set_num_threads(n_threads);
     long limit_t = floor(limit / 2.0);
 
     clock_t begin_time = clock();
 
     struct timeval t_start;
     gettimeofday(&t_start, NULL);
-    int thread_id;
+    int thread_id = 0;
 
-    #pragma omp parallel private(thread_id) num_threads(n_threads)
+
+    long end_first = BLOCK_HIGH(0, n_threads, limit_t);
+    vector<bool> is_prime_first((end_first)*n_threads + 1, true);
+    vector<long> primes_to_sieve;
+
+    omp_set_num_threads(n_threads);
+
+
+    is_prime_first[0] = false;
+    for (long i = 1; REAL_NUMBER(i) * REAL_NUMBER(i) < end_first * 2; i++) {
+        if (is_prime_first[i]) {
+            if (debug_msg_primes_seed) print(string("\n[Seed List] Block - ") + to_string(0) + " i - " + to_string(i) + "; Real - " + to_string(REAL_NUMBER(i)) + "\n", thread_id);
+            for (long h = i + (i * (REAL_NUMBER(i))); h * h < end_first; h += REAL_NUMBER(i)) {
+                if (debug_msg_primes_seed) print(string("[Seed List] Block - ") + to_string(0) + " k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
+                is_prime_first[h] = false;
+            }
+        }
+    }
+    if (debug_msg_primes_seed) print(string("Primes list - "), thread_id);
+
+    for (long i = 0; i < sqrt(is_prime_first.size()); i++) {
+        if (is_prime_first[i]) {
+            if (debug_msg_primes_seed) print(string(to_string(REAL_NUMBER(i))) + " ", thread_id);
+            primes_to_sieve.push_back(i);
+        }
+    }
+    if (debug_msg_primes_seed) print(string("\n\n"), thread_id);
+
+
+
+    #pragma omp parallel default(shared) private(thread_id) num_threads(n_threads)
     {
         thread_id = omp_get_thread_num();
 
         long start = BLOCK_LOW(thread_id, n_threads, limit_t);
         long end = BLOCK_HIGH(thread_id, n_threads, limit_t);
-        long end_first = BLOCK_HIGH(0, n_threads, limit_t);
         if (debug_msg_block_assignment)
             print(string("\nBlock - ") + to_string(thread_id) + " Start - " + to_string(start) + ", End - " +
                   to_string(end) + "; Real Start - " + to_string(REAL_NUMBER(start)) + ", End - " +
@@ -97,28 +125,7 @@ int main(int argc, char *argv[]) {
 
 
         vector<bool> is_prime((end - start) + 1, true);
-        vector<bool> is_prime_first((end - start)*4 + 1, true);
-        vector<long> primes_to_sieve;
 
-        is_prime_first[0] = false;
-        for (long i = 1; REAL_NUMBER(i) * REAL_NUMBER(i) < end_first * 2; i++) {
-            if (is_prime_first[i]) {
-                if (debug_msg_primes_seed) print(string("\n[Seed List] Block - ") + to_string(0) + " i - " + to_string(i) + "; Real - " + to_string(REAL_NUMBER(i)) + "\n", thread_id);
-                for (long h = i + (i * (REAL_NUMBER(i))); h * h < end_first; h += REAL_NUMBER(i)) {
-                    if (debug_msg_primes_seed) print(string("[Seed List] Block - ") + to_string(0) + " k - " + to_string(h) + "; Real - " + to_string(REAL_NUMBER(h)) + "; Vector - " + to_string(h) + "\n", thread_id);
-                    is_prime_first[h] = false;
-                }
-            }
-        }
-        if (debug_msg_primes_seed) print(string("Primes list - "), thread_id);
-
-        for (long i = 0; i < sqrt(is_prime_first.size()); i++) {
-            if (is_prime_first[i]) {
-                if (debug_msg_primes_seed) print(string(to_string(REAL_NUMBER(i))) + " ", thread_id);
-                primes_to_sieve.push_back(i);
-            }
-        }
-        if (debug_msg_primes_seed) print(string("\n\n"), thread_id);
 
 
         long prime_i = 1;

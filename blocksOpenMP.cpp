@@ -27,7 +27,7 @@ bool debug_msg_block_assignment = false;
 bool debug_msg_first_index = false;
 bool debug_msg_primes_found = false;
 
-bool debug_msg_primes_seed = true;
+bool debug_msg_primes_seed = false;
 
 
 vector<int> blocks_allowed_to_print;
